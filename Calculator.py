@@ -210,7 +210,7 @@ def calculate_result():
             result = num1 * num2
         elif current_operator == "÷":
             if num2 == 0:
-                error_message = "Error: Division by zero"
+                error_message = "Error: Division by 0"
                 return
             result = num1 / num2
         
