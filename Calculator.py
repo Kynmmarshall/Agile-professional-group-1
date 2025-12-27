@@ -6,7 +6,7 @@ pygame.init()
 
 # Constants
 SCREEN_WIDTH = 400
-SCREEN_HEIGHT = 550
+SCREEN_HEIGHT = 610
 BUTTON_SIZE = 80
 BUTTON_MARGIN = 10
 DISPLAY_HEIGHT = 120
@@ -23,7 +23,7 @@ ERROR_COLOR = (255, 50, 50)
 
 # Create the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Pygame Calculator - Agile Project")
+pygame.display.set_caption("Basic Calculator")
 clock = pygame.time.Clock()
 
 # Fonts
@@ -43,9 +43,9 @@ buttons = [
     # Row 1: Special buttons
     {"label": "C", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE * 2 + BUTTON_MARGIN, BUTTON_SIZE), 
      "color": SPECIAL_COLOR, "hover_color": SPECIAL_HOVER_COLOR, "type": "clear"},
-    {"label": "⌫", "rect": pygame.Rect(BUTTON_MARGIN * 2 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "Del", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
      "color": SPECIAL_COLOR, "hover_color": SPECIAL_HOVER_COLOR, "type": "backspace"},
-    {"label": "÷", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "÷", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 2: 7, 8, 9, ×
@@ -55,7 +55,7 @@ buttons = [
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
     {"label": "9", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-    {"label": "×", "rect": pygame.Rect(BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "×", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 3: 4, 5, 6, -
@@ -65,7 +65,7 @@ buttons = [
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
     {"label": "6", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-    {"label": "-", "rect": pygame.Rect(BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "-", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 4: 1, 2, 3, +
@@ -75,15 +75,15 @@ buttons = [
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
     {"label": "3", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-    {"label": "+", "rect": pygame.Rect(BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "+", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 5: 0, ., =
     {"label": "0", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + BUTTON_MARGIN * 5 + BUTTON_SIZE * 4, BUTTON_SIZE * 2 + BUTTON_MARGIN, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-    {"label": ".", "rect": pygame.Rect(BUTTON_MARGIN * 2 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 5 + BUTTON_SIZE * 4, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": ".", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 5 + BUTTON_SIZE * 4, BUTTON_SIZE, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "decimal"},
-    {"label": "=", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 5 + BUTTON_SIZE * 4, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "=", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 5 + BUTTON_SIZE * 4, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "equals"},
 ]
 
@@ -136,7 +136,7 @@ def draw_buttons():
 def draw_title():
     """Draw project title"""
     title_font = pygame.font.SysFont('Arial', 24, bold=True)
-    title = title_font.render("Agile Pygame Calculator", True, (220, 220, 255))
+    title = title_font.render("Basic Calculator", True, (220, 220, 255))
     screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, SCREEN_HEIGHT - 30))
 
 def handle_button_click(button):
