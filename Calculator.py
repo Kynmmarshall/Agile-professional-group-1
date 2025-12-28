@@ -45,7 +45,7 @@ buttons = [
      "color": SPECIAL_COLOR, "hover_color": SPECIAL_HOVER_COLOR, "type": "clear"},
     {"label": "Del", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
      "color": SPECIAL_COLOR, "hover_color": SPECIAL_HOVER_COLOR, "type": "backspace"},
-    {"label": "÷", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "/", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 2: 7, 8, 9, ×
@@ -55,7 +55,7 @@ buttons = [
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
     {"label": "9", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
      "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-    {"label": "×", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
+    {"label": "x", "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
      "color": OPERATOR_COLOR, "hover_color": OPERATOR_HOVER_COLOR, "type": "operator"},
     
     # Row 3: 4, 5, 6, -
@@ -206,9 +206,9 @@ def calculate_result():
             result = num1 + num2
         elif current_operator == "-":
             result = num1 - num2
-        elif current_operator == "×":
+        elif current_operator == "x":
             result = num1 * num2
-        elif current_operator == "÷":
+        elif current_operator == "/":
             if num2 == 0:
                 error_message = "Error: Division by 0"
                 return
