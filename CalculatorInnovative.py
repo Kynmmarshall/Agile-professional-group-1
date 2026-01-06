@@ -1,6 +1,7 @@
 import pygame
 import sys
 import json
+import math
 import os
 from datetime import datetime
 
@@ -9,11 +10,11 @@ pygame.init()
 
 # Constants
 SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 600  # Increased height for context panel
-BUTTON_SIZE = 80
+SCREEN_HEIGHT = 620  # Increased height for context panel
+BUTTON_SIZE = 70
 BUTTON_MARGIN = 10
 DISPLAY_HEIGHT = 120
-CONTEXT_PANEL_HEIGHT = 180
+CONTEXT_PANEL_HEIGHT = 175
 BACKGROUND_COLOR = (25, 30, 40)
 DISPLAY_COLOR = (20, 25, 35)
 BUTTON_COLOR = (50, 55, 75)
@@ -53,7 +54,7 @@ CONTEXT_MODES = {
     },
     "Cooking": {
         "color": (200, 120, 50),
-        "buttons": ["C", "Del", "½", "⅓", "¼", "2×", "3×", "°C/°F"],
+        "buttons": ["C", "Del", "½", "7u", "¼", "2×", "3×", "°C/°F"],
         "description": "Cooking and recipes"
     }
 }
@@ -132,14 +133,6 @@ def detect_context_pattern():
                 current_context = "Homework"
                 smart_suggestions = ["π", "e", "Solve", "Graph"]
     
-    # Time-based context switching
-    current_hour = datetime.now().hour
-    if 8 <= current_hour <= 14 and current_context == "Standard":
-        current_context = "Homework"
-        smart_suggestions = ["Study mode activated"]
-    elif 16 <= current_hour <= 20 and current_context == "Standard":
-        current_context = "Shopping"
-        smart_suggestions = ["Evening shopping mode"]
 
 def update_context_history(operation):
     """Update history of operations for pattern recognition"""
@@ -168,63 +161,98 @@ def update_context_history(operation):
 
 # Dynamic button layout based on context
 def get_buttons_for_context():
-    """Generate buttons based on current context"""
+    """Generate buttons based on current context with dynamic positioning"""
     base_buttons = []
     
-    # Common number buttons (always present)
+    # Calculate grid dimensions based on available space
+    button_area_width = SCREEN_WIDTH
+    button_area_y = DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT
+    
+    # For numbers: 3 columns
+    num_cols = 3
+    # For special buttons: 2 columns
+    special_cols = 2
+    total_cols = num_cols + special_cols
+    
+    # Calculate button width with margins
+    button_width = (button_area_width - (total_cols + 1) * BUTTON_MARGIN) // total_cols
+    button_height = BUTTON_SIZE
+    
+    # Common number buttons
     numbers = [
-        {"label": "7", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "8", "rect": pygame.Rect(BUTTON_MARGIN * 2 + BUTTON_SIZE, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "9", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "4", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "5", "rect": pygame.Rect(BUTTON_MARGIN * 2 + BUTTON_SIZE, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "6", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 2 + BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "1", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "2", "rect": pygame.Rect(BUTTON_MARGIN * 2 + BUTTON_SIZE, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "3", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": "0", "rect": pygame.Rect(BUTTON_MARGIN, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE * 2 + BUTTON_MARGIN, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "number"},
-        {"label": ".", "rect": pygame.Rect(BUTTON_MARGIN * 3 + BUTTON_SIZE * 2, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE, BUTTON_SIZE), 
-         "color": BUTTON_COLOR, "hover_color": BUTTON_HOVER_COLOR, "type": "decimal"},
+        {"label": "7", "x": 0, "y": 0},
+        {"label": "8", "x": 1, "y": 0},
+        {"label": "9", "x": 2, "y": 0},
+        {"label": "4", "x": 0, "y": 1},
+        {"label": "5", "x": 1, "y": 1},
+        {"label": "6", "x": 2, "y": 1},
+        {"label": "1", "x": 0, "y": 2},
+        {"label": "2", "x": 1, "y": 2},
+        {"label": "3", "x": 2, "y": 2},
+        {"label": "0", "x": 0, "y": 3, "colspan": 2},
+        {"label": ".", "x": 2, "y": 3},
     ]
     
-    base_buttons.extend(numbers)
+    for num in numbers:
+        colspan = num.get("colspan", 1)
+        x_pos = BUTTON_MARGIN + num["x"] * (button_width + BUTTON_MARGIN)
+        y_pos = button_area_y + BUTTON_MARGIN + num["y"] * (button_height + BUTTON_MARGIN)
+        width = button_width * colspan + BUTTON_MARGIN * (colspan - 1)
+        
+        btn_type = "number"
+        if num["label"] == ".":
+            btn_type = "decimal"
+        
+        base_buttons.append({
+            "label": num["label"],
+            "rect": pygame.Rect(x_pos, y_pos, width, button_height),
+            "color": BUTTON_COLOR,
+            "hover_color": BUTTON_HOVER_COLOR,
+            "type": btn_type
+        })
     
-    # Context-specific special buttons (right column)
+    # Context-specific special buttons
     context = CONTEXT_MODES[current_context]
     special_buttons = context["buttons"]
     
     for i, btn_label in enumerate(special_buttons[:8]):  # Max 8 special buttons
+        col = i // 4  # 0 for first column, 1 for second column
         row = i % 4
-        col = i // 4
-        x_pos = BUTTON_MARGIN * 5 + BUTTON_SIZE * 3 + (col * (BUTTON_SIZE + BUTTON_MARGIN))
-        y_pos = DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN + (row * (BUTTON_SIZE + BUTTON_MARGIN))
+        
+        x_pos = BUTTON_MARGIN * 4 + button_width * 3 + col * (button_width + BUTTON_MARGIN)
+        y_pos = button_area_y + BUTTON_MARGIN + row * (button_height + BUTTON_MARGIN)
+        
+        # Determine button type
+        btn_type = f"context_{current_context.lower()}"
+        
+        # Check if it's actually an operator (for Standard mode)
+        if current_context == "Standard" and btn_label in ["+", "-", "×", "/"]:
+            btn_type = "operator"
+        elif current_context == "Standard" and btn_label == "=":
+            btn_type = "equals"
+        elif current_context == "Standard" and btn_label in ["C", "Del"]:
+            btn_type = btn_label.lower()  # "clear" or "del"
         
         base_buttons.append({
             "label": btn_label,
-            "rect": pygame.Rect(x_pos, y_pos, BUTTON_SIZE, BUTTON_SIZE),
-            "color": SPECIAL_COLOR,
-            "hover_color": SPECIAL_HOVER_COLOR,
-            "type": "context_" + current_context.lower()
+            "rect": pygame.Rect(x_pos, y_pos, button_width, button_height),
+            "color": SPECIAL_COLOR if btn_type.startswith("context_") else OPERATOR_COLOR,
+            "hover_color": SPECIAL_HOVER_COLOR if btn_type.startswith("context_") else OPERATOR_HOVER_COLOR,
+            "type": btn_type
         })
     
-    # Always include equals button
-    base_buttons.append({
-        "label": "=",
-        "rect": pygame.Rect(BUTTON_MARGIN * 5 + BUTTON_SIZE * 3, DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + BUTTON_MARGIN * 4 + BUTTON_SIZE * 3, BUTTON_SIZE, BUTTON_SIZE),
-        "color": OPERATOR_COLOR,
-        "hover_color": OPERATOR_HOVER_COLOR,
-        "type": "equals"
-    })
+    # Equals button (already included in Standard mode, but ensure it's there for other modes)
+    if current_context != "Standard" or "=" not in [b["label"] for b in base_buttons]:
+        equals_x = BUTTON_MARGIN * 4 + button_width * 3 + (button_width + BUTTON_MARGIN)
+        equals_y = button_area_y + BUTTON_MARGIN + 3 * (button_height + BUTTON_MARGIN)
+        
+        base_buttons.append({
+            "label": "=",
+            "rect": pygame.Rect(equals_x, equals_y, button_width, button_height),
+            "color": OPERATOR_COLOR,
+            "hover_color": OPERATOR_HOVER_COLOR,
+            "type": "equals"
+        })
     
     return base_buttons
 
@@ -281,12 +309,15 @@ def draw_context_panel():
     description = small_font.render(CONTEXT_MODES[current_context]["description"], True, (200, 200, 220))
     screen.blit(description, (SCREEN_WIDTH // 2 - description.get_width() // 2, DISPLAY_HEIGHT + 32))
     
-    # Mode selector buttons
-    mode_x = 10
+    # Mode selector buttons - CENTERED
+    btn_width = 90
+    btn_height = 30
+    spacing = 10
+    total_width = len(CONTEXT_MODES) * btn_width + (len(CONTEXT_MODES) - 1) * spacing
+    mode_x = (SCREEN_WIDTH - total_width) // 2
+    
     for i, (mode_name, mode_info) in enumerate(CONTEXT_MODES.items()):
         is_active = mode_name == current_context
-        btn_width = 90
-        btn_height = 30
         
         btn_rect = pygame.Rect(mode_x, DISPLAY_HEIGHT + 60, btn_width, btn_height)
         color = mode_info["color"] if is_active else (60, 65, 85)
@@ -309,7 +340,7 @@ def draw_context_panel():
         text_rect = mode_text.get_rect(center=btn_rect.center)
         screen.blit(mode_text, text_rect)
         
-        mode_x += btn_width + 10
+        mode_x += btn_width + spacing
     
     # Smart suggestions area
     suggestion_y = DISPLAY_HEIGHT + 100
@@ -381,22 +412,14 @@ def draw_buttons():
         if button["label"] in smart_suggestions:
             pygame.draw.rect(screen, HINT_COLOR, button["rect"], 3, border_radius=8)
 
-def draw_title():
-    """Draw project title"""
-    title_font = pygame.font.SysFont('Arial', 24, bold=True)
-    title = title_font.render("Smart Context-Aware Calculator", True, (220, 230, 255))
-    screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, SCREEN_HEIGHT - 30))
-    
-    # Agile methodology indicator
-    agile_text = small_font.render("Agile Adaptive Interface", True, (150, 200, 255))
-    screen.blit(agile_text, (SCREEN_WIDTH // 2 - agile_text.get_width() // 2, SCREEN_HEIGHT - 50))
-
 def handle_button_click(button):
-    """Handle button click events with context awareness"""
-    global current_input, previous_input, current_operator, result, error_message, current_context
+    """Handle button click events for calculator buttons (not context mode buttons)"""
+    global current_input, previous_input, current_operator, result, error_message
     
     button_type = button["type"]
     button_label = button["label"]
+    
+    print(f"Calculator button clicked: {button_label}, Type: {button_type}")
     
     # Update context history
     update_context_history(button_label)
@@ -405,15 +428,58 @@ def handle_button_click(button):
     if error_message and button_type not in ["clear", "context_switch"]:
         error_message = ""
     
-    # Handle context switching
-    if button_label in CONTEXT_MODES and button_label != current_context:
-        current_context = button_label
+    # Handle clear button
+    if button_type == "clear" or button_label == "C":
+        current_input = ""
+        previous_input = ""
+        current_operator = ""
+        result = None
+        error_message = ""
         smart_suggestions.clear()
-        detect_context_pattern()
-        return
+    
+    # Handle delete button
+    elif button_type == "del" or button_label == "Del":
+        if current_input:
+            current_input = current_input[:-1]
+        elif error_message:
+            error_message = ""
+    
+    # Handle numbers
+    elif button_type == "number":
+        current_input += button_label
+    
+    # Handle decimal
+    elif button_type == "decimal":
+        if "." not in current_input:
+            if not current_input:
+                current_input = "0."
+            else:
+                current_input += "."
+    
+    # Handle operators
+    elif button_type == "operator":
+        if current_input:
+            if previous_input and current_operator:
+                calculate_result()
+                if error_message:
+                    return
+                previous_input = str(result) if result is not None else ""
+            else:
+                previous_input = current_input
+            
+            current_operator = button_label
+            current_input = ""
+    
+    # Handle equals
+    elif button_type == "equals":
+        if previous_input and current_operator and current_input:
+            calculate_result()
+            if not error_message:
+                previous_input = ""
+                current_operator = ""
     
     # Handle context-specific functions
-    if current_context == "Shopping" and button_type.startswith("context_shopping"):
+    elif current_context == "Shopping" and button_type.startswith("context_shopping"):
         handle_shopping_function(button_label)
     
     elif current_context == "Homework" and button_type.startswith("context_homework"):
@@ -424,10 +490,6 @@ def handle_button_click(button):
     
     elif current_context == "Cooking" and button_type.startswith("context_cooking"):
         handle_cooking_function(button_label)
-    
-    else:
-        # Standard calculator functions
-        handle_standard_function(button_label, button_type)
     
     # Detect patterns after each click
     detect_context_pattern()
@@ -481,113 +543,326 @@ def handle_standard_function(label, btn_type):
 
 def handle_shopping_function(label):
     """Handle shopping-specific functions"""
-    global current_input, smart_suggestions
+    global current_input, smart_suggestions, error_message, previous_input
     
-    if label == "Tip":
-        if current_input:
-            amount = float(current_input)
-            tips = {
-                "15%": amount * 0.15,
-                "18%": amount * 0.18,
-                "20%": amount * 0.20
-            }
-            smart_suggestions = [f"{k}: ${v:.2f}" for k, v in tips.items()]
+    try:
+        if label == "Tip":
+            if current_input:
+                amount = float(current_input)
+                tips = {
+                    "15%": amount * 0.15,
+                    "18%": amount * 0.18,
+                    "20%": amount * 0.20
+                }
+                smart_suggestions = [f"{k}: ${v:.2f}" for k, v in tips.items()]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "Tax":
+            if current_input:
+                # Assume 8% tax rate
+                amount = float(current_input)
+                tax = amount * 0.08
+                current_input = str(round(amount + tax, 2))
+                smart_suggestions = ["Tax added: 8%"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "Split":
+            if current_input and previous_input:
+                try:
+                    total = float(previous_input)
+                    people = float(current_input)
+                    if people == 0:
+                        error_message = "Cannot split by 0 people"
+                        return
+                    per_person = total / people
+                    current_input = str(round(per_person, 2))
+                    smart_suggestions = [f"Each pays: ${per_person:.2f}"]
+                except:
+                    error_message = "Invalid split values"
+            else:
+                error_message = "Enter total and people count"
+        
+        elif label == "Total":
+            if current_input and previous_input:
+                # Calculate with previous input as price and current as quantity
+                try:
+                    price = float(previous_input)
+                    quantity = float(current_input)
+                    total = price * quantity
+                    current_input = str(round(total, 2))
+                    smart_suggestions = [f"Total: ${total:.2f}"]
+                except:
+                    error_message = "Invalid values"
+        
+        elif label == "Save":
+            if current_input and previous_input:
+                try:
+                    original = float(previous_input)
+                    discount = float(current_input)
+                    if discount < 0 or discount > 100:
+                        error_message = "Discount must be 0-100%"
+                        return
+                    saved = original * (discount / 100)
+                    final_price = original - saved
+                    current_input = str(round(final_price, 2))
+                    smart_suggestions = [f"Saved: ${saved:.2f}"]
+                except:
+                    error_message = "Invalid discount"
+            else:
+                error_message = "Enter price and discount %"
     
-    elif label == "Tax":
-        if current_input:
-            # Assume 8% tax rate
-            amount = float(current_input)
-            tax = amount * 0.08
-            current_input = str(amount + tax)
-            smart_suggestions = ["Tax added: 8%"]
-    
-    elif label == "Split":
-        if current_input and previous_input:
-            try:
-                total = float(previous_input)
-                people = float(current_input)
-                per_person = total / people
-                current_input = str(per_person)
-                smart_suggestions = [f"Each pays: ${per_person:.2f}"]
-            except:
-                error_message = "Invalid split"
+    except ValueError:
+        error_message = "Invalid number format"
+    except Exception as e:
+        error_message = f"Error: {str(e)[:30]}"
 
 def handle_homework_function(label):
     """Handle homework-specific functions"""
-    global current_input
+    global current_input, error_message, smart_suggestions
     
     if label == "π":
-        current_input = str(3.1415926535)
+        current_input = str(math.pi)
+        smart_suggestions = ["e", "√", "x²", "sin()"]
     
     elif label == "√":
         if current_input:
             try:
                 num = float(current_input)
                 if num >= 0:
-                    current_input = str(num ** 0.5)
+                    result = math.sqrt(num)
+                    current_input = str(round(result, 10)).rstrip('0').rstrip('.')
                 else:
-                    error_message = "Invalid sqrt"
+                    error_message = "Error: Negative sqrt"
             except:
-                error_message = "Invalid input"
+                error_message = "Error: Invalid input"
+        else:
+            error_message = "Error: Enter a number first"
     
     elif label == "x²":
         if current_input:
             try:
                 num = float(current_input)
-                current_input = str(num ** 2)
+                result = num ** 2
+                current_input = str(round(result, 10)).rstrip('0').rstrip('.')
             except:
-                error_message = "Invalid input"
+                error_message = "Error: Invalid input"
+        else:
+            error_message = "Error: Enter a number first"
+    
+    elif label == "sin":
+        if current_input:
+            try:
+                num = float(current_input)
+                # Convert degrees to radians
+                radians = math.radians(num)
+                result = math.sin(radians)
+                current_input = str(round(result, 10)).rstrip('0').rstrip('.')
+                smart_suggestions = ["cos", "tan", "π", "√"]
+            except:
+                error_message = "Error: Invalid input"
+        else:
+            error_message = "Error: Enter angle in degrees first"
+    
+    elif label == "cos":
+        if current_input:
+            try:
+                num = float(current_input)
+                radians = math.radians(num)
+                result = math.cos(radians)
+                current_input = str(round(result, 10)).rstrip('0').rstrip('.')
+                smart_suggestions = ["sin", "tan", "π", "√"]
+            except:
+                error_message = "Error: Invalid input"
+        else:
+            error_message = "Error: Enter angle in degrees first"
+    
+    elif label == "tan":
+        if current_input:
+            try:
+                num = float(current_input)
+                radians = math.radians(num)
+                # Check for undefined tan (90°, 270°, etc.)
+                if abs(math.cos(radians)) < 1e-10:
+                    error_message = "Error: Undefined tan"
+                    return
+                result = math.tan(radians)
+                current_input = str(round(result, 10)).rstrip('0').rstrip('.')
+                smart_suggestions = ["sin", "cos", "π", "√"]
+            except:
+                error_message = "Error: Invalid input"
+        else:
+            error_message = "Error: Enter angle in degrees first"
+    
+    elif label == "e":
+        current_input = str(math.e)
+        smart_suggestions = ["π", "ln", "log", "√"]
 
 def handle_budgeting_function(label):
     """Handle budgeting-specific functions"""
-    global current_input, smart_suggestions
+    global current_input, smart_suggestions, error_message, previous_input
     
-    if label == "%":
-        if current_input:
-            current_input = str(float(current_input) / 100)
-            smart_suggestions = ["Converted to decimal"]
-    
-    elif label == "Inc":
-        if current_input and previous_input:
-            try:
+    try:
+        if label == "%":
+            if current_input:
+                try:
+                    value = float(current_input)
+                    current_input = str(value / 100)
+                    smart_suggestions = ["Converted to decimal"]
+                except:
+                    error_message = "Invalid percentage"
+            else:
+                error_message = "Enter a number first"
+        
+        elif label == "Inc":
+            if current_input and previous_input:
                 base = float(previous_input)
                 percentage = float(current_input)
                 increased = base * (1 + percentage/100)
-                current_input = str(increased)
+                current_input = str(round(increased, 2))
                 smart_suggestions = [f"Increased by {percentage}%"]
-            except:
-                error_message = "Invalid calculation"
+            else:
+                error_message = "Enter base and percentage"
+        
+        elif label == "Dec":
+            if current_input and previous_input:
+                base = float(previous_input)
+                percentage = float(current_input)
+                decreased = base * (1 - percentage/100)
+                current_input = str(round(decreased, 2))
+                smart_suggestions = [f"Decreased by {percentage}%"]
+            else:
+                error_message = "Enter base and percentage"
+        
+        elif label == "Avg":
+            if current_input and previous_input:
+                num1 = float(previous_input)
+                num2 = float(current_input)
+                average = (num1 + num2) / 2
+                current_input = str(round(average, 2))
+                smart_suggestions = ["Average calculated"]
+            else:
+                error_message = "Enter two numbers"
+        
+        elif label == "Save":
+            if current_input:
+                try:
+                    income = float(current_input)
+                    save_10 = income * 0.10
+                    save_20 = income * 0.20
+                    save_30 = income * 0.30
+                    smart_suggestions = [
+                        f"Save 10%: ${save_10:.2f}",
+                        f"Save 20%: ${save_20:.2f}",
+                        f"Save 30%: ${save_30:.2f}"
+                    ]
+                except:
+                    error_message = "Invalid income"
+            else:
+                error_message = "Enter income first"
+        
+        elif label == "Goal":
+            if current_input and previous_input:
+                try:
+                    target = float(previous_input)
+                    current_saved = float(current_input)
+                    if target <= 0:
+                        error_message = "Goal must be positive"
+                        return
+                    progress = (current_saved / target) * 100
+                    current_input = f"{progress:.1f}%"
+                    smart_suggestions = [f"Progress: {progress:.1f}%"]
+                except:
+                    error_message = "Invalid goal values"
+            else:
+                error_message = "Enter goal and current savings"
+    
+    except ValueError:
+        error_message = "Invalid number format"
+    except Exception as e:
+        error_message = f"Error: {str(e)[:30]}"
 
 def handle_cooking_function(label):
     """Handle cooking-specific functions"""
-    global current_input
+    global current_input, error_message, smart_suggestions, previous_input
     
-    if label == "½":
-        if current_input:
-            try:
+    try:
+        if label == "½":
+            if current_input:
                 num = float(current_input)
-                current_input = str(num / 2)
-            except:
-                error_message = "Invalid input"
-    
-    elif label == "2×":
-        if current_input:
-            try:
+                current_input = str(round(num / 2, 3)).rstrip('0').rstrip('.')
+                smart_suggestions = ["2×", "⅓", "¼"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "⅓":
+            if current_input:
                 num = float(current_input)
-                current_input = str(num * 2)
-            except:
-                error_message = "Invalid input"
-    
-    elif label == "°C/°F":
-        if current_input:
-            try:
+                current_input = str(round(num / 3, 3)).rstrip('0').rstrip('.')
+                smart_suggestions = ["½", "¼", "2×"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "¼":
+            if current_input:
+                num = float(current_input)
+                current_input = str(round(num / 4, 3)).rstrip('0').rstrip('.')
+                smart_suggestions = ["½", "⅓", "2×"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "2×":
+            if current_input:
+                num = float(current_input)
+                current_input = str(round(num * 2, 3)).rstrip('0').rstrip('.')
+                smart_suggestions = ["½", "⅓", "3×"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "3×":
+            if current_input:
+                num = float(current_input)
+                current_input = str(round(num * 3, 3)).rstrip('0').rstrip('.')
+                smart_suggestions = ["½", "⅓", "2×"]
+            else:
+                error_message = "Enter amount first"
+        
+        elif label == "°C/°F":
+            if current_input:
                 temp = float(current_input)
-                # Assume input is °C, convert to °F
-                converted = (temp * 9/5) + 32
-                current_input = f"{converted:.1f}°F"
-                smart_suggestions = ["Converted °C to °F"]
-            except:
-                error_message = "Invalid temperature"
+                # Check if input might already be °F (high temp)
+                if temp > 100:  # Likely °F
+                    converted = (temp - 32) * 5/9
+                    current_input = f"{converted:.1f}°C"
+                    smart_suggestions = ["Converted °F to °C"]
+                else:  # Likely °C
+                    converted = (temp * 9/5) + 32
+                    current_input = f"{converted:.1f}°F"
+                    smart_suggestions = ["Converted °C to °F"]
+            else:
+                error_message = "Enter temperature first"
+        
+        elif label == "Save":
+            if current_input and previous_input:
+                # Save recipe: current input is servings, previous is ingredients
+                try:
+                    servings = float(current_input)
+                    base_ingredient = float(previous_input)
+                    per_serving = base_ingredient / servings
+                    current_input = str(round(per_serving, 3))
+                    smart_suggestions = [f"Per serving: {per_serving:.3f}"]
+                except:
+                    error_message = "Invalid recipe values"
+            else:
+                error_message = "Enter total and servings"
+    
+    except ValueError:
+        error_message = "Invalid number format"
+    except ZeroDivisionError:
+        error_message = "Cannot divide by zero"
+    except Exception as e:
+        error_message = f"Error: {str(e)[:30]}"
 
 def calculate_result():
     """Perform calculation"""
@@ -622,10 +897,19 @@ def calculate_result():
 
 # Main game loop
 def main():
+    global current_context, smart_suggestions, calculation_pattern, current_input, previous_input
+    global current_operator, result, error_message
+    
     running = True
     
     # Load initial context data
     load_context_data()
+    
+    print(f"\nCalculator started with screen size: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+    print("Controls:")
+    print("  - Click mode buttons to switch context")
+    print("  - Click calculator buttons to use")
+    print("  - Close window to exit")
     
     while running:
         # Handle events
@@ -633,34 +917,104 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             
+            elif event.type == pygame.KEYDOWN:
+                # Keyboard support for common operations
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_BACKSPACE:
+                    if current_input:
+                        current_input = current_input[:-1]
+                    elif error_message:
+                        error_message = ""
+                elif event.key == pygame.K_c:
+                    current_input = ""
+                    previous_input = ""
+                    current_operator = ""
+                    result = None
+                    error_message = ""
+                    smart_suggestions.clear()
+                elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                    if previous_input and current_operator and current_input:
+                        calculate_result()
+                        if not error_message:
+                            previous_input = ""
+                            current_operator = ""
+                elif pygame.K_0 <= event.key <= pygame.K_9:
+                    current_input += chr(event.key)
+                elif event.key == pygame.K_PERIOD or event.key == pygame.K_KP_PERIOD:
+                    if "." not in current_input:
+                        current_input += "."
+                elif event.key == pygame.K_PLUS or event.key == pygame.K_KP_PLUS:
+                    # Simulate clicking the + button
+                    button = {"label": "+", "type": "operator"}
+                    handle_button_click(button)
+                elif event.key == pygame.K_MINUS or event.key == pygame.K_KP_MINUS:
+                    # Simulate clicking the - button
+                    button = {"label": "-", "type": "operator"}
+                    handle_button_click(button)
+                elif event.key == pygame.K_ASTERISK or event.key == pygame.K_KP_MULTIPLY:
+                    # Simulate clicking the × button
+                    button = {"label": "×", "type": "operator"}
+                    handle_button_click(button)
+                elif event.key == pygame.K_SLASH or event.key == pygame.K_KP_DIVIDE:
+                    # Simulate clicking the / button
+                    button = {"label": "/", "type": "operator"}
+                    handle_button_click(button)
+            
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click
                     mouse_pos = pygame.mouse.get_pos()
                     
-                    # Check context mode buttons
-                    mode_x = 10
-                    for mode_name in CONTEXT_MODES:
-                        btn_rect = pygame.Rect(mode_x, DISPLAY_HEIGHT + 60, 90, 30)
+                    # FIRST: Check context mode selector buttons (at the top of context panel)
+                    mode_button_width = min(100, (SCREEN_WIDTH - 20) // len(CONTEXT_MODES) - 10)
+                    mode_button_height = 35
+                    mode_x = (SCREEN_WIDTH - (len(CONTEXT_MODES) * (mode_button_width + 10))) // 2
+                    
+                    context_switched = False
+                    for i, mode_name in enumerate(CONTEXT_MODES.keys()):
+                        btn_rect = pygame.Rect(mode_x, DISPLAY_HEIGHT + 60, mode_button_width, mode_button_height)
                         if btn_rect.collidepoint(mouse_pos):
+                            print(f"Clicked context mode: {mode_name}")
                             current_context = mode_name
                             smart_suggestions.clear()
-                            detect_context_pattern()
+                            calculation_pattern.clear()
+                            
+                            # Reset calculator state
+                            current_input = ""
+                            previous_input = ""
+                            current_operator = ""
+                            result = None
+                            error_message = ""
+                            
+                            # Set initial suggestions
+                            if current_context == "Shopping":
+                                smart_suggestions = ["Tip 15%", "Add Tax", "Split Bill", "Total"]
+                            elif current_context == "Homework":
+                                smart_suggestions = ["π", "√", "sin()", "cos()", "tan()"]
+                            elif current_context == "Budgeting":
+                                smart_suggestions = ["% Increase", "% Decrease", "Average", "Save"]
+                            elif current_context == "Cooking":
+                                smart_suggestions = ["½ Recipe", "2× Recipe", "Convert Units", "°C to °F"]
+                            else:
+                                smart_suggestions = []
+                            
+                            context_switched = True
                             break
-                        mode_x += 100
+                        mode_x += mode_button_width + 10
                     
-                    # Check calculator buttons
-                    buttons = get_buttons_for_context()
-                    for button in buttons:
-                        if button["rect"].collidepoint(mouse_pos):
-                            handle_button_click(button)
-                            break
+                    # Only check calculator buttons if we didn't switch context
+                    if not context_switched:
+                        buttons = get_buttons_for_context()
+                        for button in buttons:
+                            if button["rect"].collidepoint(mouse_pos):
+                                handle_button_click(button)
+                                break
         
         # Draw everything
         screen.fill(BACKGROUND_COLOR)
         draw_display()
         draw_context_panel()
         draw_buttons()
-        draw_title()
         
         # Update display
         pygame.display.flip()
