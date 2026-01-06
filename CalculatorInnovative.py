@@ -53,25 +53,25 @@ CONTEXT_MODES = {
         "color": (40, 160, 80),
         "buttons": ["C", "Del", "%", "Tax", "Tip", "Split", "Save", "Total"],
         "description": "Shopping and expenses",
-        "input_fields": ["Amount ($):", "People:", "Tip %:", "Tax %:"]
+        "input_fields": ["Amount / original amount(fcfa):", "People:", "Tip %:", "Tax %:"]
     },
     "Budgeting": {
         "color": (180, 100, 60),
         "buttons": ["C", "Del", "%", "Avg", "Inc", "Dec", "Save", "Goal"],
         "description": "Personal budgeting",
-        "input_fields": ["Base Amount:", "Percentage:", "Target Goal:", "Current:"]
+        "input_fields": ["Base Amount:", "Percentage:", "Target Goal:", "Current:", "num1:", "num2:"]
     },
     "Cooking": {
         "color": (200, 120, 50),
         "buttons": ["C", "Del", "½", "⅓", "¼", "2×", "3×", "°C/°F"],
         "description": "Cooking and recipes",
-        "input_fields": ["Amount:", "Servings:", "Temperature:", "Scale Factor:"]
+        "input_fields": ["Amount:", "Servings:", "Temperature (°C):", "Scale Factor:"]
     }
 }
 
 # Create the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Smart Context-Aware Calculator with Input Panel")
+pygame.display.set_caption("Smart Context-Aware Calculator")
 clock = pygame.time.Clock()
 
 # Fonts
@@ -123,7 +123,7 @@ def initialize_input_fields():
     
     input_fields = {}
     input_field_values = {}
-    active_input_field = None
+    active_input_field = {}
     
     context_info = CONTEXT_MODES[current_context]
     field_labels = context_info["input_fields"]
@@ -323,7 +323,7 @@ def draw_display():
     text_color = ERROR_COLOR if error_message else TEXT_COLOR
     
     if len(display_text) > 40:
-        display_text = display_text[:50] + "..."
+        display_text = display_text[:40] + "..."
     
     text_surface = display_font.render(display_text, True, text_color)
     text_rect = text_surface.get_rect()
@@ -462,10 +462,10 @@ def draw_input_panel():
         "4. Press Enter to apply"
     ]
     
-    y_pos = DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + 50
+    y_pos = DISPLAY_HEIGHT + CONTEXT_PANEL_HEIGHT + 80
     for instruction in instructions:
         inst_text = hint_font.render(instruction, True, (150, 170, 200))
-        screen.blit(inst_text, (SCREEN_WIDTH - INPUT_PANEL_WIDTH + 20, y_pos))
+        screen.blit(inst_text, (SCREEN_WIDTH - INPUT_PANEL_WIDTH + 20, y_pos + 130))
         y_pos += 22
     
     # Draw separator
@@ -501,7 +501,7 @@ def draw_buttons():
 
 def handle_button_click(button):
     """Handle button click events for calculator buttons"""
-    global current_input, previous_input, current_operator, result, error_message
+    global current_input, previous_input, current_operator, result, error_message, active_input_field
     
     button_type = button["type"]
     button_label = button["label"]
@@ -511,53 +511,100 @@ def handle_button_click(button):
     if error_message and button_type not in ["clear", "context_switch"]:
         error_message = ""
     
+    # Handle clear button
     if button_type == "clear" or button_label == "C":
-        current_input = ""
-        previous_input = ""
-        current_operator = ""
-        result = None
-        error_message = ""
-        smart_suggestions.clear()
-        # Also clear input fields
-        for field_id in input_field_values:
-            input_field_values[field_id] = ""
+        if active_input_field is not None:
+            # Clear only the active input field
+            input_field_values[active_input_field] = ""
+        else:
+            # Clear main display
+            current_input = ""
+            previous_input = ""
+            current_operator = ""
+            result = None
+            error_message = ""
+            smart_suggestions.clear()
+            # Also clear all input fields
+            for field_id in input_field_values:
+                input_field_values[field_id] = ""
     
+    # Handle delete button
     elif button_type == "del" or button_label == "Del":
-        if current_input:
+        if active_input_field is not None:
+            # Delete from active input field
+            current_value = input_field_values.get(active_input_field, "")
+            input_field_values[active_input_field] = current_value[:-1]
+        elif current_input:
+            # Delete from main display
             current_input = current_input[:-1]
         elif error_message:
             error_message = ""
     
+    # Handle numbers - type into active field or main display
     elif button_type == "number":
-        current_input += button_label
+        if active_input_field is not None:
+            # Append to active input field
+            current_value = input_field_values.get(active_input_field, "")
+            input_field_values[active_input_field] = current_value + button_label
+        else:
+            # Append to main display
+            current_input += button_label
     
+    # Handle decimal point
     elif button_type == "decimal":
-        if "." not in current_input:
-            if not current_input:
-                current_input = "0."
-            else:
-                current_input += "."
+        if active_input_field is not None:
+            # Add decimal to active input field
+            current_value = input_field_values.get(active_input_field, "")
+            if "." not in current_value:
+                if not current_value:
+                    input_field_values[active_input_field] = "0."
+                else:
+                    input_field_values[active_input_field] = current_value + "."
+        else:
+            # Add decimal to main display
+            if "." not in current_input:
+                if not current_input:
+                    current_input = "0."
+                else:
+                    current_input += "."
     
+    # Handle operators (only for main display)
     elif button_type == "operator":
-        if current_input:
-            if previous_input and current_operator:
-                calculate_result()
-                if error_message:
-                    return
-                previous_input = str(result) if result is not None else ""
-            else:
-                previous_input = current_input
-            
-            current_operator = button_label
-            current_input = ""
+        if active_input_field is not None:
+            # Operators not allowed in input fields
+            # You could choose to ignore or show an error
+            # For now, let's ignore operator clicks when input field is active
+            return
+        else:
+            # Original operator logic for main display
+            if current_input:
+                if previous_input and current_operator:
+                    calculate_result()
+                    if error_message:
+                        return
+                    previous_input = str(result) if result is not None else ""
+                else:
+                    previous_input = current_input
+                
+                current_operator = button_label
+                current_input = ""
     
+    # Handle equals (only for main display)
     elif button_type == "equals":
-        if previous_input and current_operator and current_input:
-            calculate_result()
-            if not error_message:
-                previous_input = ""
-                current_operator = ""
+        if active_input_field is not None:
+            # Pressing equals on input field applies the value
+            # You could choose to move focus back to main display
+            # For now, let's clear the active field
+            active_input_field = None
+        else:
+            # Original equals logic for main display
+            if previous_input and current_operator and current_input:
+                calculate_result()
+                if not error_message:
+                    previous_input = ""
+                    current_operator = ""
     
+    # Handle context-specific functions
     elif current_context == "Shopping" and button_type.startswith("context_shopping"):
         handle_shopping_function(button_label)
     
@@ -574,8 +621,8 @@ def handle_button_click(button):
 
 def handle_shopping_function(label):
     """Handle shopping-specific functions using input fields"""
-    global current_input, smart_suggestions, error_message, previous_input
-    
+    global current_input, smart_suggestions, error_message, previous_input, active_input_field 
+ 
     try:
         if label == "Tip":
             # Get amount from field_0 or current input
@@ -596,10 +643,12 @@ def handle_shopping_function(label):
             total = amount + tip_amount
             
             current_input = str(round(total, 2))
-            smart_suggestions = [f"Tip: ${tip_amount:.2f}", f"Total: ${total:.2f}"]
+            smart_suggestions = [f"Tip: {tip_amount:.2f} fcfa", f"Total: {total:.2f} fcfa"]
             set_input_value("field_0", str(amount))
             if tip_percent != 15:
                 set_input_value("field_2", str(tip_percent))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Tax":
             amount = get_input_value("field_0")
@@ -618,8 +667,10 @@ def handle_shopping_function(label):
             total = amount + tax
             
             current_input = str(round(total, 2))
-            smart_suggestions = [f"Tax: ${tax:.2f}", f"Total: ${total:.2f}"]
+            smart_suggestions = [f"Tax: fcfa{tax:.2f}", f"Total: fcfa{total:.2f}"]
             set_input_value("field_0", str(amount))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Split":
             total = get_input_value("field_0")
@@ -635,9 +686,11 @@ def handle_shopping_function(label):
             
             per_person = total / people
             current_input = str(round(per_person, 2))
-            smart_suggestions = [f"Each pays: ${per_person:.2f}"]
+            smart_suggestions = [f"Each pays: {per_person:.2f} fcfa"]
             set_input_value("field_0", str(total))
             set_input_value("field_1", str(int(people)))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Total":
             # For shopping, calculate price * quantity
@@ -647,11 +700,13 @@ def handle_shopping_function(label):
                     quantity = float(current_input)
                     total = price * quantity
                     current_input = str(round(total, 2))
-                    smart_suggestions = [f"Total: ${total:.2f}"]
+                    smart_suggestions = [f"Total: {total:.2f} fcfa"]
                 except:
                     error_message = "Invalid values"
             else:
                 error_message = "Enter price and quantity"
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Save":
             original = get_input_value("field_0")
@@ -674,10 +729,12 @@ def handle_shopping_function(label):
                 saved = original * (discount_pct / 100)
                 final_price = original - saved
                 current_input = str(round(final_price, 2))
-                smart_suggestions = [f"Saved: ${saved:.2f}", f"Final: ${final_price:.2f}"]
+                smart_suggestions = [f"Saved: {saved:.2f} fcfa", f"Final: {final_price:.2f} fcfa"]
                 set_input_value("field_0", str(original))
             except:
                 error_message = "Invalid discount"
+            # Clear active input field after operation
+            active_input_field = None
     
     except ValueError:
         error_message = "Invalid number format"
@@ -686,12 +743,14 @@ def handle_shopping_function(label):
 
 def handle_homework_function(label):
     """Handle homework-specific functions"""
-    global current_input, error_message, smart_suggestions
+    global current_input, error_message, smart_suggestions, active_input_field 
     
     if label == "π":
         current_input = str(math.pi)
         smart_suggestions = ["e", "√", "x²", "sin()"]
         set_input_value("field_1", str(math.pi))
+        # Clear active input field after operation
+        active_input_field = None
     
     elif label == "√":
         value = get_input_value("field_1")
@@ -708,6 +767,8 @@ def handle_homework_function(label):
             set_input_value("field_1", str(result))
         else:
             error_message = "Error: Negative sqrt"
+        # Clear active input field after operation
+        active_input_field = None
     
     elif label == "x²":
         value = get_input_value("field_1")
@@ -721,6 +782,8 @@ def handle_homework_function(label):
         result = value ** 2
         current_input = str(round(result, 10)).rstrip('0').rstrip('.')
         set_input_value("field_1", str(result))
+        # Clear active input field after operation
+        active_input_field = None
     
     elif label in ["sin", "cos", "tan"]:
         angle = get_input_value("field_0")
@@ -747,15 +810,19 @@ def handle_homework_function(label):
         smart_suggestions = ["sin", "cos", "tan", "π", "√"]
         set_input_value("field_0", str(angle))
         set_input_value("field_1", str(result))
+        # Clear active input field after operation
+        active_input_field = None
     
     elif label == "e":
         current_input = str(math.e)
         smart_suggestions = ["π", "ln", "log", "√"]
         set_input_value("field_1", str(math.e))
+        # Clear active input field after operation
+        active_input_field = None
 
 def handle_budgeting_function(label):
     """Handle budgeting-specific functions using input fields"""
-    global current_input, smart_suggestions, error_message, previous_input
+    global current_input, smart_suggestions, error_message, previous_input, active_input_field 
     
     try:
         if label == "%":
@@ -770,6 +837,8 @@ def handle_budgeting_function(label):
             current_input = str(value / 100)
             smart_suggestions = ["Converted to decimal"]
             set_input_value("field_1", str(value))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Inc":
             base = get_input_value("field_0")
@@ -784,6 +853,8 @@ def handle_budgeting_function(label):
             smart_suggestions = [f"Increased by {percentage}% to {increased:.2f}"]
             set_input_value("field_0", str(base))
             set_input_value("field_1", str(percentage))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Dec":
             base = get_input_value("field_0")
@@ -798,17 +869,36 @@ def handle_budgeting_function(label):
             smart_suggestions = [f"Decreased by {percentage}% to {decreased:.2f}"]
             set_input_value("field_0", str(base))
             set_input_value("field_1", str(percentage))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Avg":
-            # For avg, we might use two inputs or previous and current
-            if previous_input and current_input:
-                num1 = float(previous_input)
-                num2 = float(current_input)
+            # For avg, use two input values or previous and current
+            num1 = get_input_value("field_4")
+            num2 = get_input_value("field_5")
+            
+            # Check if values are in input fields first
+            if num1 is None or num2 is None:
+                # Fall back to using previous and current inputs
+                if previous_input and current_input:
+                    try:
+                        num1 = float(previous_input)
+                        num2 = float(current_input)
+                        average = (num1 + num2) / 2
+                        current_input = str(round(average, 2))
+                        smart_suggestions = ["Average calculated"]
+                    except:
+                        error_message = "Enter num1 and num2 for average"
+                else:
+                    error_message = "Enter num1 and num2 for average"
+            else:
+                # Use values from input fields
                 average = (num1 + num2) / 2
                 current_input = str(round(average, 2))
                 smart_suggestions = ["Average calculated"]
-            else:
-                error_message = "Enter two numbers for average"
+            
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Save":
             income = get_input_value("field_0")
@@ -824,11 +914,13 @@ def handle_budgeting_function(label):
             save_30 = income * 0.30
             
             smart_suggestions = [
-                f"Save 10%: ${save_10:.2f}",
-                f"Save 20%: ${save_20:.2f}",
-                f"Save 30%: ${save_30:.2f}"
+                f"Save 10%: {save_10:.2f} fcfa",
+                f"Save 20%: {save_20:.2f} fcfa",
+                f"Save 30%: {save_30:.2f} fcfa"
             ]
             set_input_value("field_0", str(income))
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "Goal":
             target = get_input_value("field_2")
@@ -844,9 +936,11 @@ def handle_budgeting_function(label):
             
             progress = (current_saved / target) * 100
             current_input = f"{progress:.1f}%"
-            smart_suggestions = [f"Progress: {progress:.1f}% of ${target:.2f}"]
+            smart_suggestions = [f"Progress: {progress:.1f}% of {target:.2f} fcfa"]
             set_input_value("field_2", str(target))
             set_input_value("field_3", str(current_saved))
+            # Clear active input field after operation
+            active_input_field = None
     
     except ValueError:
         error_message = "Invalid number format"
@@ -855,7 +949,7 @@ def handle_budgeting_function(label):
 
 def handle_cooking_function(label):
     """Handle cooking-specific functions using input fields"""
-    global current_input, error_message, smart_suggestions, previous_input
+    global current_input, error_message, smart_suggestions, previous_input, active_input_field 
     
     try:
         amount = get_input_value("field_0")
@@ -875,6 +969,8 @@ def handle_cooking_function(label):
             smart_suggestions = ["2×", "⅓", "¼"]
             set_input_value("field_0", current_input)
             set_input_value("field_3", "0.5")
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "⅓":
             if amount is None:
@@ -888,6 +984,8 @@ def handle_cooking_function(label):
             smart_suggestions = ["½", "¼", "2×"]
             set_input_value("field_0", current_input)
             set_input_value("field_3", "0.333")
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "¼":
             if amount is None:
@@ -901,6 +999,8 @@ def handle_cooking_function(label):
             smart_suggestions = ["½", "⅓", "2×"]
             set_input_value("field_0", current_input)
             set_input_value("field_3", "0.25")
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "2×":
             if amount is None:
@@ -914,6 +1014,8 @@ def handle_cooking_function(label):
             smart_suggestions = ["½", "⅓", "3×"]
             set_input_value("field_0", current_input)
             set_input_value("field_3", "2")
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "3×":
             if amount is None:
@@ -927,6 +1029,8 @@ def handle_cooking_function(label):
             smart_suggestions = ["½", "⅓", "2×"]
             set_input_value("field_0", current_input)
             set_input_value("field_3", "3")
+            # Clear active input field after operation
+            active_input_field = None
         
         elif label == "°C/°F":
             if temperature is None:
@@ -949,6 +1053,8 @@ def handle_cooking_function(label):
                 current_input = f"{converted:.1f}°F"
                 smart_suggestions = ["Converted °C to °F"]
                 set_input_value("field_2", current_input)
+            # Clear active input field after operation
+            active_input_field = None
     
     except ValueError:
         error_message = "Invalid number format"
@@ -959,7 +1065,7 @@ def handle_cooking_function(label):
 
 def calculate_result():
     """Perform calculation"""
-    global current_input, result, error_message
+    global current_input, result, error_message, active_input_field
     
     try:
         num1 = float(previous_input)
@@ -981,6 +1087,9 @@ def calculate_result():
             current_input = str(int(result))
         else:
             current_input = str(round(result, 10)).rstrip('0').rstrip('.')
+        
+        # Clear active input field after calculation
+        active_input_field = None
     
     except ValueError:
         error_message = "Error: Invalid input"
