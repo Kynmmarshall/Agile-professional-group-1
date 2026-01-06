@@ -1,11 +1,11 @@
 {
   "patterns": {},
   "mode_usage": {
-    "Shopping": 114,
-    "Standard": 7,
-    "Budgeting": 47,
-    "Homework": 82,
-    "Cooking": 23
+    "Shopping": 183,
+    "Standard": 10,
+    "Budgeting": 64,
+    "Homework": 103,
+    "Cooking": 56
   },
   "preferences": {}
 }
