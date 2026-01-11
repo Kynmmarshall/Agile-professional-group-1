@@ -57,6 +57,8 @@ This project represents an advanced implementation of Agile methodologies in dev
 | 7 | Asongwe Tony Khan | **Developer 5** - UI/UX design, professional color schemes, visual polish |
 | 8 | Bidias Killian | **Developer 6** - Quality assurance, smart feature testing, validation |
 | 9 | Kosho Angelo | **Developer 7** - Integration & performance optimization, JSON data management |
+| 10| Nji Cyril Fru |       |
+
 
 ## 🏗️ Agile Implementation for Smart Features
 
